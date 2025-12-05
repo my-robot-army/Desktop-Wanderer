@@ -1,0 +1,13 @@
+pynput
+ultralytics==8.3.152
+torch
+torchvision
+opencv-python
+numpy
+tqdm
+pandas
+matplotlib
+PyYAML
+requests
+onnxruntime
+pyserial
