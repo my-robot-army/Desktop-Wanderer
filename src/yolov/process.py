@@ -2,12 +2,29 @@ import os
 import cv2
 import numpy as np
 import onnxruntime as ort
+import yaml
+
+
+with open('config.yaml', 'r', encoding='utf-8') as f:
+    config = yaml.safe_load(f)
+HARDWARE_MODE = config['hardware_mode']
+
+if HARDWARE_MODE == "310b":
+    import acl
+    from acllite.acllite_model import AclLiteModel
+    from acllite.acllite_resource import AclLiteResource
+elif HARDWARE_MODE == "normal":
+    import onnxruntime as ort
 
 # 初始化模型
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, 'models', 'tennis.onnx')
-session = ort.InferenceSession(MODEL_PATH, providers=['CPUExecutionProvider'])
-input_name = session.get_inputs()[0].name
+if HARDWARE_MODE == "310b":
+    MODEL_PATH = os.path.join(BASE_DIR, 'models', 'tennis.om')
+    model = AclLiteModel(MODEL_PATH)
+else:
+    MODEL_PATH = os.path.join(BASE_DIR, 'models', 'tennis.onnx')
+    session = ort.InferenceSession(MODEL_PATH, providers=['CPUExecutionProvider'])
+    input_name = session.get_inputs()[0].name
 img_size = 640
 
 def process_img(frame):
@@ -25,8 +42,17 @@ def process_img(frame):
     input_img = np.full((img_size, img_size, 3), 114, dtype=np.uint8)
     input_img[pad_top:pad_top + new_h, pad_left:pad_left + new_w] = resized
 
-    blob = cv2.dnn.blobFromImage(input_img, scalefactor=1 / 255.0, size=(img_size, img_size), swapRB=True, crop=False)
-    outputs = session.run(None, {input_name: blob})
+    if HARDWARE_MODE == "310b":
+        # 图像预处理：BGR转RGB，归一化，维度调整
+        input_img = cv2.cvtColor(input_img, cv2.COLOR_BGR2RGB)
+        input_img = input_img.astype(np.float32) / 255.0
+        input_img = np.transpose(input_img, (2, 0, 1))  # HWC->CHW
+        input_img = np.expand_dims(input_img, axis=0)  # 添加批次维度
+        outputs = model.execute([input_img])
+    else:
+        blob = cv2.dnn.blobFromImage(input_img, scalefactor=1 / 255.0, size=(img_size, img_size), swapRB=True, crop=False)
+        outputs = session.run(None, {input_name: blob})
+
     pred = outputs[0].squeeze().T  # [C, N] -> [N, C]
 
     if pred.ndim != 2 or pred.shape[0] == 0:
@@ -35,7 +61,7 @@ def process_img(frame):
     scores = pred[:, 4:]
     class_ids = np.argmax(scores, axis=1)
     conf_scores = scores[np.arange(len(scores)), class_ids]
-    mask = conf_scores > 0.50
+    mask = conf_scores > 0.70
 
     pred = pred[mask]
     conf_scores = conf_scores[mask]

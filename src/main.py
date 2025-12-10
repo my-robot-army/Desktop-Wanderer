@@ -26,6 +26,7 @@ logging.basicConfig(level=getattr(logging, LOG_LEVEL))
 PORT = config['port']
 TARGET_W = config['target_w']
 TARGET_H = config['target_h']
+HARDWARE_MODE = config['hardware_mode']
 
 logging.info("正在打开摄像头...")
 cap = cv2.VideoCapture(0)
@@ -45,6 +46,7 @@ bottom = min(height, bottom)
 TARGET_CX = left + TARGET_W // 2
 TARGET_CY = top + TARGET_H // 2
 
+TARGET_POSITION = max(TARGET_W, TARGET_H)
 
 FPS = 30
 
@@ -100,6 +102,7 @@ def main():
                 x, y, w, h = box["x"], box["y"], box["w"], box["h"]
                 center_x = x + w // 2
                 center_y = y + h // 2
+                position = max(w, h)
                 if center_x < left:
                     if abs(TARGET_CX - center_x) < TARGET_W:
                         action = direction.get_action("rotate_left", 0)
@@ -112,17 +115,18 @@ def main():
                     else:
                         action = direction.get_action("rotate_right")
                     in_zone_frame_count = 0
-                elif center_y < top:
-                    if abs(TARGET_CY - center_y) < TARGET_H:
+                elif position < TARGET_POSITION:
+                    if TARGET_POSITION - position < TARGET_H * 2 // 3:
                         action = direction.get_action("forward", 0)
                     else:
                         action = direction.get_action("forward")
                     in_zone_frame_count = 0
                 elif center_y > bottom:
-                    if abs(TARGET_CY - center_y) < TARGET_H:
-                        action = direction.get_action("backward", 0)
-                    else:
-                        action = direction.get_action("backward")
+                    # if abs(TARGET_CY - center_y) < TARGET_H:
+                        # action = direction.get_action("backward", 0)
+                    # else:
+                        # action = direction.get_action("backward")
+                    action = direction.get_action(None)
                     in_zone_frame_count = 0
                 else:
                     action = direction.get_action(None)
@@ -131,7 +135,8 @@ def main():
                     if in_zone_frame_count > 10:
                         in_zone_frame_count = 0
             else:
-                action = teleop.get_action()
+                # action = teleop.get_action()
+                action = direction.get_action("rotate_right", 0)
                 in_zone_frame_count = 0
 
             _action_sent = robot.send_action(action)
