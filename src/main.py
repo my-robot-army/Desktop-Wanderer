@@ -1,6 +1,8 @@
 import sys
 import os
 
+from .utils import get_nearly_target_box
+
 sys.path.append(os.path.dirname(__file__))
 import time
 
@@ -57,10 +59,6 @@ def main():
 
     teleop = KeyboardTeleop()
     direction = DirectionControl()
-    print("WASD: 移动 | QE: 旋转 | []: 调速 | ESC: 退出")
-
-    logging.info("正在打开摄像头...")
-    cap = cv2.VideoCapture(0)
     in_zone_frame_count = 0
 
     try:
@@ -86,20 +84,8 @@ def main():
                     break
 
             if result and len(result) > 0:
-                box = result[0]
-                if len(result) > 1:
-                    x, y, w, h = box["x"], box["y"], box["w"], box["h"]
-                    center_x = x + w // 2
-                    center_y = y + h // 2
-                    dist = (TARGET_CX - center_x) ** 2 + (TARGET_CY - center_y) ** 2
-                    for other_box in result[1:]:
-                        x, y, w, h = other_box["x"], other_box["y"], other_box["w"], other_box["h"]
-                        center_x = x + w // 2
-                        center_y = y + h // 2
-                        if dist > (TARGET_CX - center_x) ** 2 + (TARGET_CY - center_y) ** 2:
-                            box = other_box
-
-                x, y, w, h = box["x"], box["y"], box["w"], box["h"]
+                box = get_nearly_target_box(result, TARGET_CX, TARGET_CY)
+                x, y, w, h = box.x, box.y, box.w, box.h
                 center_x = x + w // 2
                 center_y = y + h // 2
                 position = max(w, h)
@@ -122,10 +108,6 @@ def main():
                         action = direction.get_action("forward")
                     in_zone_frame_count = 0
                 elif center_y > bottom:
-                    # if abs(TARGET_CY - center_y) < TARGET_H:
-                        # action = direction.get_action("backward", 0)
-                    # else:
-                        # action = direction.get_action("backward")
                     action = direction.get_action(None)
                     in_zone_frame_count = 0
                 else:

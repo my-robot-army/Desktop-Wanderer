@@ -1,9 +1,9 @@
 import os
 import cv2
 import numpy as np
-import onnxruntime as ort
 import yaml
 
+from .box import Box
 
 with open('config.yaml', 'r', encoding='utf-8') as f:
     config = yaml.safe_load(f)
@@ -13,7 +13,10 @@ if HARDWARE_MODE == "310b":
     import acl
     from acllite.acllite_model import AclLiteModel
     from acllite.acllite_resource import AclLiteResource
-elif HARDWARE_MODE == "normal":
+
+    acl_resource = AclLiteResource()
+    acl_resource.init()
+else:
     import onnxruntime as ort
 
 # 初始化模型
@@ -25,11 +28,12 @@ else:
     MODEL_PATH = os.path.join(BASE_DIR, 'models', 'tennis.onnx')
     session = ort.InferenceSession(MODEL_PATH, providers=['CPUExecutionProvider'])
     input_name = session.get_inputs()[0].name
+
 img_size = 640
 
 def process_img(frame):
     if frame is None or frame.size == 0:
-        print(" 无效的图像输入")
+        print("无效的图像输入")
         return []
 
     H, W = frame.shape[:2]
@@ -89,12 +93,7 @@ def process_img(frame):
         for idx in indices:
             i = int(idx) if np.isscalar(idx) else int(idx[0])
             x1, y1, x2, y2 = raw_boxes[i]
-            box = {
-                "x": int(x1),
-                "y": int(y1),
-                "w": int(x2 - x1),
-                "h": int(y2 - y1)
-            }
+            box = Box(int(x1), int(y1), int(x2 - x1), int(y2 - y1))
             boxes.append(box)
 
     return boxes
