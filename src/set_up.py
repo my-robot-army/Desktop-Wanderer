@@ -57,6 +57,8 @@ def init_app():
         _control_mode = RobotControlModel.ACT
     else:
         _control_mode = RobotControlModel.INVERSE
+
+
     _is_initialized = True
 
 

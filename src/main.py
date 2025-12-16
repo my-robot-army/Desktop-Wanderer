@@ -2,8 +2,8 @@ import sys
 import os
 
 from src.arm_act_controller import arm_controller
-from src.arm_keyboard_controller import p_control_loop, move_to_zero_position
-from src.state import init_app, get_left, get_top, get_right, get_bottom, get_port, get_log_level, get_robot_status, \
+from src.arm_inverse_controller import p_control_loop, move_to_zero_position
+from src.set_up import init_app, get_left, get_top, get_right, get_bottom, get_port, get_log_level, get_robot_status, \
     RobotStatus, get_control_mode, RobotControlModel, set_robot_status
 from src.utils import busy_wait
 from src.move_controller import move_controller, get_empty_move_action

@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 from .box import Box
-from src.state import get_hardware_mode
+from src.set_up import get_hardware_mode
 
 HARDWARE_MODE = get_hardware_mode()
 
