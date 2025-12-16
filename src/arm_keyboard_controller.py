@@ -38,14 +38,15 @@ xy_controls = {
     'd': ('y', 0.004),  # y increase
 }
 
-def p_control_loop(robot, cmd, key, start_positions, current_x, current_y, kp=0.5, control_freq=50):
-    global target_positions
+pitch = 0.0  # Initial pitch adjustment
+
+def p_control_loop(robot, cmd, current_x, current_y, kp=0.5, control_freq=50):
+    global target_positions, pitch
     """
     P control loop
 
     Args:
         robot: robot instance
-        key: key code
         target_positions: target joint position dictionary
         start_positions: start joint position dictionary
         current_x: current x coordinate
@@ -55,10 +56,11 @@ def p_control_loop(robot, cmd, key, start_positions, current_x, current_y, kp=0.
     """
 
     # Initialize pitch control variables
-    pitch = 0.0  # Initial pitch adjustment
     pitch_step = 1  # Pitch adjustment step size
 
     move_command_list = []
+    joint_command_list = []
+    wrist_command_list = []
 
     try:
         cmd_name = cmd[0]
@@ -78,23 +80,44 @@ def p_control_loop(robot, cmd, key, start_positions, current_x, current_y, kp=0.
             if cmd_y < current_y:
                 key = 'e'
                 move_command_list.append(key)
+        elif cmd_name == 'open_gripper':
+            step = cmd[1]
+            key = 'h'
+            for _ in range(step):
+                joint_command_list.append(key)
+        elif cmd_name == 'close_gripper':
+            step = cmd[1]
+            key = 'y'
+            for _ in range(step):
+                joint_command_list.append(key)
+        elif cmd_name == 'wrist_flex':
+            step = cmd[1]
+            if step > 0:
+                key = 'r'
+            else:
+                key = 'f'
+            for _ in range(abs(step)):
+                wrist_command_list.append(key)
+
 
         # Pitch control
-        if key == 'r':
-            pitch += pitch_step
-            print(f"Increase pitch adjustment: {pitch:.3f}")
-        elif key == 'f':
-            pitch -= pitch_step
-            print(f"Decrease pitch adjustment: {pitch:.3f}")
+        if len(wrist_command_list) > 0:
+            for key in wrist_command_list:
+                if key == 'r':
+                    pitch += pitch_step
+                    print(f"Increase pitch adjustment: {pitch:.3f}")
+                elif key == 'f':
+                    pitch -= pitch_step
+                    print(f"Decrease pitch adjustment: {pitch:.3f}")
 
-        if key in joint_controls:
-            joint_name, delta = joint_controls[key]
-            if joint_name in target_positions:
-                current_target = target_positions[joint_name]
-                new_target = int(current_target + delta)
-                target_positions[joint_name] = new_target
-                print(f"Update target position {joint_name}: {current_target} -> {new_target}")
-
+        if len(joint_command_list) > 0:
+            for key in joint_command_list:
+                joint_name, delta = joint_controls[key]
+                if joint_name in target_positions:
+                    current_target = target_positions[joint_name]
+                    new_target = int(current_target + delta)
+                    target_positions[joint_name] = new_target
+                    print(f"Update target position {joint_name}: {current_target} -> {new_target}")
 
         if len(move_command_list) > 0:
             for key in move_command_list:

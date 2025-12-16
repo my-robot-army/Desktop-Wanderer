@@ -4,7 +4,7 @@ import os
 from src.arm_act_controller import arm_controller
 from src.arm_keyboard_controller import p_control_loop, move_to_zero_position
 from src.state import init_app, get_left, get_top, get_right, get_bottom, get_port, get_log_level, get_robot_status, \
-    RobotStatus, get_control_mode, RobotControlModel
+    RobotStatus, get_control_mode, RobotControlModel, set_robot_status
 from src.utils import busy_wait
 from src.move_controller import move_controller, get_empty_move_action
 
@@ -22,10 +22,12 @@ from yolov.process import yolo_infer
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=getattr(logging, get_log_level()))
 
-FPS = 30
+FPS = 50
 
-CATCH_ACTION = [("move_to", (0.1309, -0.0709))]
-COMMAND_STEP = 0
+# CATCH_ACTION = [("wrist_flex", 90), ("move_to", (0.1509, -0.0709)), ("open_gripper", 100)]
+CATCH_ACTION = [("wrist_flex", 48), ("open_gripper", 50), ("move_to", (0.1089, -0.06)), ("close_gripper", 40),
+                ("move_to", (0.0, 0.13)), ("open_gripper", 50)]
+
 
 def main():
     init_app()
@@ -50,7 +52,7 @@ def main():
 
     x0, y0 = 0.1629, 0.1131
     current_x, current_y = x0, y0
-
+    command_step = 0
     try:
         while True:
             t0 = time.perf_counter()
@@ -82,12 +84,29 @@ def main():
                 if get_control_mode() == RobotControlModel.ACT:
                     arm_action = arm_controller(robot)
                 else:
-                    arm_action, current_x, current_y = p_control_loop(robot, CATCH_ACTION[COMMAND_STEP], 'w',start_positions, current_x,
-                                                current_y, kp=0.5,
-                                                control_freq=FPS)
-                    if current_x == 0 and current_y == 0:
-                        print("CATCH")
-            if get_robot_status() == RobotStatus.SEARCH:
+                    arm_action, current_x, current_y = p_control_loop(robot, CATCH_ACTION[command_step],
+                                                                      current_x,
+                                                                      current_y, kp=0.5,
+                                                                      control_freq=FPS)
+                    if CATCH_ACTION[command_step][0] == "move_to":
+                        if abs(current_x - CATCH_ACTION[command_step][1][0]) < 0.005 and abs(
+                                current_y - CATCH_ACTION[command_step][1][1]) < 0.005:
+                            command_step += 1
+                            if command_step == len(CATCH_ACTION):
+                                set_robot_status(RobotStatus.FIND)
+                    elif CATCH_ACTION[command_step][0] == "open_gripper":
+                        command_step += 1
+                        if command_step == len(CATCH_ACTION):
+                            set_robot_status(RobotStatus.FIND)
+                    elif CATCH_ACTION[command_step][0] == "close_gripper":
+                        command_step += 1
+                        if command_step == len(CATCH_ACTION):
+                            set_robot_status(RobotStatus.FIND)
+                    elif CATCH_ACTION[command_step][0] == "wrist_flex":
+                        command_step += 1
+                        if command_step == len(CATCH_ACTION):
+                            set_robot_status(RobotStatus.FIND)
+            elif get_robot_status() == RobotStatus.SEARCH:
                 move_action = move_controller(direction, result)
 
             _action_sent = robot.send_action({**arm_action, **move_action})
