@@ -15,12 +15,9 @@ JOINT_CALIBRATION = [
 
 # Joint control mapping
 joint_controls = {
-    'q': ('arm_shoulder_pan', -1),  # Joint 1 decrease
-    'a': ('arm_shoulder_pan', 1),  # Joint 1 increase
-    't': ('arm_wrist_roll', -1),  # Joint 5 decrease
-    'g': ('arm_wrist_roll', 1),  # Joint 5 increase
-    'y': ('arm_gripper', -1),  # Joint 6 decrease
-    'h': ('arm_gripper', 1),  # Joint 6 increase
+    'shoulder_pan': 'arm_shoulder_pan',  # Joint 1 decrease
+    'wrist_roll': 'arm_wrist_roll',  # Joint 5 increase
+    'gripper': 'arm_gripper',  # Joint 6 increase
 }
 
 # x,y coordinate control
@@ -31,7 +28,8 @@ xy_controls = {
     'd': ('y', 0.004),  # y increase
 }
 
-def p_control_loop(robot, cmd, current_x, current_y, kp=0.5, control_freq=50):
+
+def p_control_loop(robot, cmd, current_x, current_y, kp=0.5):
     """
     P control loop
 
@@ -40,7 +38,6 @@ def p_control_loop(robot, cmd, current_x, current_y, kp=0.5, control_freq=50):
         current_x: current x coordinate
         current_y: current y coordinate
         kp: proportional gain
-        control_freq: control frequency (Hz)
     """
 
     # Initialize pitch control variables
@@ -70,50 +67,25 @@ def p_control_loop(robot, cmd, current_x, current_y, kp=0.5, control_freq=50):
             if cmd_y < current_y:
                 key = 'e'
                 move_command_list.append(key)
-        elif cmd_name == 'open_gripper':
-            step = cmd[1]
-            key = 'h'
-            for _ in range(step):
-                joint_command_list.append(key)
-        elif cmd_name == 'close_gripper':
-            step = cmd[1]
-            key = 'y'
-            for _ in range(step):
-                joint_command_list.append(key)
-        elif cmd_name == 'wrist_flex':
-            step = cmd[1]
-            if step > 0:
-                key = 'r'
-            else:
-                key = 'f'
-            for _ in range(abs(step)):
-                wrist_command_list.append(key)
-        elif cmd_name == 'shoulder_pan':
-            step = cmd[1]
-            if step > 0:
-                key = 'a'
-            else:
-                key = 'q'
-            for _ in range(abs(step)):
-                joint_command_list.append(key)
+
+        if cmd_name in joint_controls:
+            joint_command_list.append(cmd)
+        else:
+            wrist_command_list.append(cmd)
 
         # Pitch control
         if len(wrist_command_list) > 0:
-            for key in wrist_command_list:
-                if key == 'r':
-                    pitch += pitch_step
-                    print(f"Increase pitch adjustment: {pitch:.3f}")
-                elif key == 'f':
-                    pitch -= pitch_step
-                    print(f"Decrease pitch adjustment: {pitch:.3f}")
+            for key, value in wrist_command_list:
+                if key == 'wrist_flex':
+                    pitch += value
             set_pitch(pitch)
 
         if len(joint_command_list) > 0:
-            for key in joint_command_list:
-                joint_name, delta = joint_controls[key]
+            for key, value in joint_command_list:
+                joint_name = joint_controls[key]
                 if joint_name in target_positions:
                     current_target = target_positions[joint_name]
-                    new_target = int(current_target + delta)
+                    new_target = int(current_target + value)
                     target_positions[joint_name] = new_target
                     print(f"Update target position {joint_name}: {current_target} -> {new_target}")
 
@@ -131,7 +103,6 @@ def p_control_loop(robot, cmd, current_x, current_y, kp=0.5, control_freq=50):
             target_positions['arm_elbow_flex'] = joint3_target
             print(
                 f"Update x coordinate: {current_x:.4f}, Update y coordinate: {current_y:.4f}, joint2={joint2_target:.3f}, joint3={joint3_target:.3f}")
-
 
         # Apply pitch adjustment to wrist_flex
         # Calculate wrist_flex target position based on shoulder_lift and elbow_flex

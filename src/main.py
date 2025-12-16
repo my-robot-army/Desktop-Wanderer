@@ -21,9 +21,9 @@ logging.basicConfig(level=getattr(logging, get_log_level()))
 
 FPS = 50
 
-CATCH_ACTION = [("shoulder_pan", -8), ("wrist_flex", 48), ("open_gripper", 60), ("move_to", (0.1089, -0.07)),
-                ("close_gripper", 40),
-                ("shoulder_pan", 8), ("move_to", (0.0, 0.13)), ("open_gripper", 50)]
+CATCH_ACTION = [("shoulder_pan", -8), ("wrist_flex", 48), ("gripper", 60), ("move_to", (0.1089, -0.07)),
+                ("gripper", -40),
+                ("shoulder_pan", 8), ("move_to", (0.0, 0.13)), ("gripper", 50)]
 
 
 # CATCH_ACTION = [("shoulder_pan", -8),("wrist_flex", 48), ("open_gripper", 50), ("move_to", (0.1089, -0.06))]
@@ -86,8 +86,7 @@ def main():
                 else:
                     arm_action, current_x, current_y = p_control_loop(robot, CATCH_ACTION[command_step],
                                                                       current_x,
-                                                                      current_y, kp=0.5,
-                                                                      control_freq=FPS)
+                                                                      current_y, kp=0.5)
                     if CATCH_ACTION[command_step][0] == "move_to":
                         if abs(current_x - CATCH_ACTION[command_step][1][0]) < 0.005 and abs(
                                 current_y - CATCH_ACTION[command_step][1][1]) < 0.005:
