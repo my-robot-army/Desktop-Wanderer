@@ -21,7 +21,7 @@ logging.basicConfig(level=getattr(logging, get_log_level()))
 
 FPS = 50
 
-CATCH_ACTION = [("shoulder_pan", -8), ("wrist_flex", 48), ("gripper", 60), ("move_to", (0.1089, -0.075)),
+CATCH_ACTION = [("shoulder_pan", -8), ("wrist_flex", 58), ("gripper", 60), ("move_to", (0.1089, -0.075)),
                 ("gripper", -40),
                 ("shoulder_pan", 8), ("move_to", (0.0, 0.13)), ("gripper", 50)]
 
@@ -48,7 +48,7 @@ def main():
     for joint_name, position in start_positions.items():
         print(f"  {joint_name}: {position}°")
 
-    return_to_start_position(robot, get_target_positions(), 0.2, FPS)
+    return_to_start_position(robot, start_obs, get_target_positions(), 0.2, FPS)
     # x0, y0 = 0.1629, 0.1131
     x0, y0 = 0.0069, 0.0970
     current_x, current_y = x0, y0
@@ -57,8 +57,8 @@ def main():
         while True:
             t0 = time.perf_counter()
 
-            obs = robot.get_observation()
-            frame = obs["front"]
+            current_obs = robot.get_observation()
+            frame = current_obs["front"]
             result = yolo_infer(frame)
 
             if get_hardware_mode() == 'normal':
@@ -84,9 +84,9 @@ def main():
                 if get_control_mode() == RobotControlModel.ACT:
                     arm_action = arm_controller(robot)
                 else:
-                    arm_action, current_x, current_y = p_control_loop(robot, CATCH_ACTION[command_step],
+                    arm_action, current_x, current_y = p_control_loop(CATCH_ACTION[command_step],
                                                                       current_x,
-                                                                      current_y, kp=0.5)
+                                                                      current_y, current_obs, kp=0.5)
                     if CATCH_ACTION[command_step][0] == "move_to":
                         if abs(current_x - CATCH_ACTION[command_step][1][0]) < 0.005 and abs(
                                 current_y - CATCH_ACTION[command_step][1][1]) < 0.005:

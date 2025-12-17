@@ -27,14 +27,15 @@ xy_controls = {
 }
 
 
-def p_control_loop(robot, cmd, current_x, current_y, kp=0.5):
+def p_control_loop(cmd, current_x, current_y, current_obs, kp=0.5):
     """
     P control loop
 
     Args:
-        robot: robot instance
+        cmd
         current_x: current x coordinate
         current_y: current y coordinate
+        current_obs: current observation
         kp: proportional gain
     """
 
@@ -111,9 +112,6 @@ def p_control_loop(robot, cmd, current_x, current_y, kp=0.5):
             print(
                 f"Current pitch adjustment: {pitch:.3f}, wrist_flex target: {target_positions['arm_wrist_flex']:.3f}")
 
-        # Get current robot state
-        current_obs = robot.get_observation()
-
         # Extract current joint positions
         current_positions = {}
         for key, value in current_obs.items():
@@ -145,12 +143,13 @@ def p_control_loop(robot, cmd, current_x, current_y, kp=0.5):
         return {}, current_x, current_y
 
 
-def return_to_start_position(robot, start_positions, kp=0.5, control_freq=50):
+def return_to_start_position(robot, current_obs, start_positions, kp=0.5, control_freq=50):
     """
     Use P control to return to start position
 
     Args:
         robot: robot instance
+        current_obs: start position
         start_positions: start joint position dictionary
         kp: proportional gain
         control_freq: control frequency (Hz)
@@ -162,7 +161,6 @@ def return_to_start_position(robot, start_positions, kp=0.5, control_freq=50):
 
     for step in range(max_steps):
         # Get current robot state
-        current_obs = robot.get_observation()
         current_positions = {}
         for key, value in current_obs.items():
             if key.endswith('.pos'):
