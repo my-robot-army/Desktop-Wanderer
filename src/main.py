@@ -14,7 +14,7 @@ import time
 import logging
 import cv2
 
-from yolov.process import yolo_infer
+from src.yolov.process import yolo_infer
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=getattr(logging, get_log_level()))

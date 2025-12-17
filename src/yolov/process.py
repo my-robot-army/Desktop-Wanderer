@@ -4,7 +4,6 @@ import numpy as np
 
 from .box import Box
 from src.setup import get_hardware_mode
-from .setup import get_is_acl_initialized, is_setup
 
 HARDWARE_MODE = get_hardware_mode()
 
@@ -14,10 +13,8 @@ if HARDWARE_MODE == "310b":
     from acllite.acllite_model import AclLiteModel
     from acllite.acllite_resource import AclLiteResource
 
-    if get_is_acl_initialized() is False:
-        acl_resource = AclLiteResource()
-        acl_resource.init()
-        is_setup()
+    acl_resource = AclLiteResource()
+    acl_resource.init()
 else:
     import onnxruntime as ort
 
