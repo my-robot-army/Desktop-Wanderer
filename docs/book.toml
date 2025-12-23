@@ -1,0 +1,8 @@
+[book]
+title = "What is Desktop-Wanderer"
+authors = ["junbo.dai"]
+language = "zh"
+src = "src"
+
+[output.html]
+default-theme = "light"
