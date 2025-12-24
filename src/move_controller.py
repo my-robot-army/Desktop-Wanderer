@@ -53,7 +53,53 @@ def move_controller(direction: DirectionControl, result: list[Box]) -> dict[str,
             action = direction.get_action(None)
             _cycle_time += 1
             if _cycle_time > 10:
-                set_robot_status(RobotStatus.CATCH)
+                set_robot_status(RobotStatus.PICK)
+                _cycle_time = 0
+    else:
+        if _last_ball_center_x is not None:
+            frame_center = (left + right) // 2
+            if _last_ball_center_x < frame_center:
+                action = direction.get_action("rotate_left", 0)
+            else:
+                action = direction.get_action("rotate_right", 0)
+        else:
+            action = direction.get_action(None)
+    return action
+
+def move_controller_for_bucket(direction: DirectionControl, result: list[Box]) -> dict[str, float]:
+    global _cycle_time, _last_ball_center_x
+    if result and len(result) > 0:
+        box = get_nearly_target_box(result, TARGET_CX, TARGET_CY)
+        x, y, w, h = box.x, box.y, box.w, box.h
+        center_x = x + w // 2
+        position = max(w, h)
+        _last_ball_center_x = center_x
+        if center_x < left:
+            if abs(TARGET_CX - center_x) < target_w:
+                action = direction.get_action("rotate_left", 0)
+            else:
+                action = direction.get_action("rotate_left")
+            _cycle_time = 0
+        elif center_x > right:
+            if abs(TARGET_CX - center_x) < target_w:
+                action = direction.get_action("rotate_right", 0)
+            else:
+                action = direction.get_action("rotate_right")
+            _cycle_time = 0
+        elif position < (TARGET_POSITION - 20) * 2:
+            if TARGET_POSITION - position < target_h:
+                action = direction.get_action("forward", 0)
+            else:
+                action = direction.get_action("forward")
+            _cycle_time = 0
+        elif position > (TARGET_POSITION + 20) * 2:
+            action = direction.get_action("backward", 0)
+            _cycle_time = 0
+        else:
+            action = direction.get_action(None)
+            _cycle_time += 1
+            if _cycle_time > 10:
+                set_robot_status(RobotStatus.PUT_BALL)
                 _cycle_time = 0
     else:
         if _last_ball_center_x is not None:

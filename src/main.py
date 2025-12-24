@@ -7,7 +7,8 @@ from src.robot_setup import init_robot, get_robot, get_direction, reset_robot, g
 from src.setup import init_app, get_left, get_top, get_right, get_bottom, get_log_level, get_robot_status, \
     RobotStatus, get_control_mode, RobotControlModel, set_robot_status, get_hardware_mode
 from src.utils import busy_wait
-from src.move_controller import move_controller, get_empty_move_action
+from src.move_controller import move_controller, get_empty_move_action, move_controller_for_bucket
+from src.yolov import get_red_bucket_local
 
 sys.path.append(os.path.dirname(__file__))
 import time
@@ -61,7 +62,10 @@ def main():
 
             current_obs = robot.get_observation()
             frame = current_obs["front"]
-            result = yolo_infer(frame)
+            if get_robot_status() == RobotStatus.FIND_BUCKET:
+                result = get_red_bucket_local(frame)
+            else:
+                result = yolo_infer(frame)
 
             if get_hardware_mode() == 'normal':
                 for box in result:
@@ -82,7 +86,7 @@ def main():
             arm_action = {}
             move_action = get_empty_move_action(direction)
 
-            if get_robot_status() == RobotStatus.CATCH:
+            if get_robot_status() == RobotStatus.PICK:
                 if get_control_mode() == RobotControlModel.ACT:
                     arm_action = arm_controller(robot)
                 else:
@@ -105,6 +109,8 @@ def main():
                             command_step = 0
             elif get_robot_status() == RobotStatus.SEARCH:
                 move_action = move_controller(direction, result)
+            elif get_robot_status() == RobotStatus.FIND_BUCKET:
+                move_action = move_controller_for_bucket(direction, result)
 
             _action_sent = robot.send_action({**arm_action, **move_action})
             busy_wait(max(1.0 / FPS - (time.perf_counter() - t0), 0.0))

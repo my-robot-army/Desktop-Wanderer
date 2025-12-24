@@ -109,3 +109,27 @@ def yolo_infer(frame):
             boxes.append(box)
 
     return boxes
+
+def get_red_bucket_local(frame):
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    lower_red1 = np.array([0, 80, 50])
+    upper_red1 = np.array([10, 255, 255])
+    lower_red2 = np.array([170, 80, 50])
+    upper_red2 = np.array([180, 255, 255])
+
+    mask = (
+            cv2.inRange(hsv, lower_red1, upper_red1)
+            | cv2.inRange(hsv, lower_red2, upper_red2)
+    )
+
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    boxes = []
+    for cnt in contours:
+        if cv2.contourArea(cnt) > 5000:
+            x, y, w, h = cv2.boundingRect(cnt)
+            box = Box(int(x), int(y), int(w), int(h))
+            boxes.append(box)
+
+    return boxes
