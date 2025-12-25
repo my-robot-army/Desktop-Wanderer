@@ -1,3 +1,4 @@
+import logging
 import math
 import time
 import traceback
@@ -85,7 +86,7 @@ def p_control_loop(cmd, current_x, current_y, current_obs, kp=0.5):
                     current_target = target_positions[joint_name]
                     new_target = int(current_target + value)
                     target_positions[joint_name] = new_target
-                    print(f"Update target position {joint_name}: {current_target} -> {new_target}")
+                    logging.debug(f"Update target position {joint_name}: {current_target} -> {new_target}")
 
         if len(move_command_list) > 0:
             for key, value in move_command_list:
@@ -99,7 +100,7 @@ def p_control_loop(cmd, current_x, current_y, current_obs, kp=0.5):
             joint2_target, joint3_target = inverse_kinematics(current_x, current_y)
             target_positions['arm_shoulder_lift'] = joint2_target
             target_positions['arm_elbow_flex'] = joint3_target
-            print(
+            logging.debug(
                 f"Update x coordinate: {current_x:.4f}, Update y coordinate: {current_y:.4f}, joint2={joint2_target:.3f}, joint3={joint3_target:.3f}")
 
         # Apply pitch adjustment to wrist_flex
@@ -113,7 +114,7 @@ def p_control_loop(cmd, current_x, current_y, current_obs, kp=0.5):
         else:
             p_control_loop.step_counter = 0
         if p_control_loop.step_counter % 100 == 0:
-            print(
+            logging.debug(
                 f"Current pitch adjustment: {pitch:.3f}, wrist_flex target: {target_positions['arm_wrist_flex']:.3f}")
 
         # Extract current joint positions
@@ -142,7 +143,7 @@ def p_control_loop(cmd, current_x, current_y, current_obs, kp=0.5):
         if robot_action:
             return robot_action, current_x, current_y
     except Exception as e:
-        print(f"P control loop error: {e}")
+        logging.debug(f"P control loop error: {e}")
         traceback.print_exc()
         return {}, current_x, current_y
 
