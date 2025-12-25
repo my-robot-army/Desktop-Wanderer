@@ -88,7 +88,7 @@ def move_controller_for_bucket(direction: DirectionControl, result: list[Box]) -
             _cycle_time = 0
         elif position < TARGET_POSITION * 2.6:
             if TARGET_POSITION - position < target_h:
-                action = direction.get_action("forward", 0)
+                action = direction.get_action("forward")
             else:
                 action = direction.get_action("forward")
             _cycle_time = 0
