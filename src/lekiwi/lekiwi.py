@@ -31,7 +31,7 @@ from lerobot.motors.feetech import (
 from lerobot.utils.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 
 from .robot import Robot
-from .utils import ensure_safe_goal_position
+from .utils import ensure_safe_goal_position, _timeout_input
 from .lekiwi_config import LeKiwiConfig
 
 logger = logging.getLogger(__name__)
@@ -132,8 +132,10 @@ class LeKiwi(Robot):
     def calibrate(self) -> None:
         if self.calibration:
             # Calibration file exists, ask user whether to use it or run new calibration
-            user_input = input(
-                f"Press ENTER to use provided calibration file associated with the id {self.id}, or type 'c' and press ENTER to run calibration: "
+            user_input = _timeout_input(
+                f"Press ENTER to use provided calibration file associated with the id {self.id}, or type 'c' and press ENTER to run calibration: ",
+                timeout=3.0,
+                default=""
             )
             if user_input.strip().lower() != "c":
                 logger.info(f"Writing calibration file associated with the id {self.id} to the motors")

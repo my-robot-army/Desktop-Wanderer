@@ -14,6 +14,8 @@
 
 import logging
 import platform
+import select
+import sys
 import time
 from pprint import pformat
 from typing import cast
@@ -86,3 +88,14 @@ def busy_wait(seconds):
         # On Linux time.sleep is accurate
         if seconds > 0:
             time.sleep(seconds)
+
+
+def _timeout_input(prompt, timeout=3.0, default=''):
+    """带超时的输入函数"""
+    print(prompt, end='', flush=True)
+
+    if sys.stdin in select.select([sys.stdin], [], [], timeout)[0]:
+        return sys.stdin.readline().strip()
+    else:
+        print()  # 换行
+        return default
