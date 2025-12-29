@@ -20,14 +20,14 @@ from src.yolov.process import yolo_infer
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=getattr(logging, get_log_level()))
 
-CATCH_ACTION = [("shoulder_pan", -12),
+CATCH_ACTION = [("shoulder_pan", -11),
                 ("gripper", 50),
                 ("wrist_flex", 88),
-                ("move_to", (0.0700, 0.1211)),
-                ("move_to", (0.0700, -0.04)),
+                ("move_to", (0.0750, 0.1211)),
+                ("move_to", (0.0750, -0.04)),
                 ("gap", 0),
                 ("gripper", -40),
-                ("shoulder_pan", 12),
+                ("shoulder_pan", 11),
                 ("move_to", (0.07, 0.24)),
                 ("wrist_flex", 8)
                 ]
