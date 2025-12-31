@@ -31,6 +31,28 @@ Desktop-Wanderer 采用四层分层架构设计，从应用层到硬件层逐级
 
 2. 软件依赖
 > pip install -r requirements.txt
+
+3. lerobot 平台安装
+
+python 3.10环境准备
+```commandline
+wget "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
+bash Miniforge3-$(uname)-$(uname -m).sh
+conda create -y -n lerobot python=3.10
+```
+lerobot 安装
+```commandline
+conda activate lerobot
+conda install ffmpeg -c conda-forge
+git clone https://github.com/huggingface/lerobot.git
+cd lerobot
+pip install -e .
+# 舵机驱动安装
+pip install -e ".[feetech]"
+```
+
+详细说明可看安装与配置部分
+
 ### 配置设置
 
 修改 config.yaml 配置文件：
