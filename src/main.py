@@ -20,16 +20,17 @@ from src.yolov.process import yolo_infer
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=getattr(logging, get_log_level()))
 
-CATCH_ACTION = [("shoulder_pan", -11),
-                ("gripper", 50),
-                ("wrist_flex", 88),
-                ("move_to", (0.0750, 0.1211)),
-                ("move_to", (0.0750, -0.04)),
-                ("gap", 0),
-                ("gripper", -40),
-                ("shoulder_pan", 11),
-                ("move_to", (0.07, 0.24)),
-                ("wrist_flex", 8)
+# 夹球的动作序列
+CATCH_ACTION = [("shoulder_pan", -11), # 对应1号舵机
+                ("gripper", 50), # 夹爪打开
+                ("wrist_flex", 88),  # 腕部舵机转动角度
+                ("move_to", (0.0750, 0.1211)), # 机械臂坐标移动指令，x移动到范围为 0.22 - -0.22
+                ("move_to", (0.0750, -0.04)), # 机械臂移动到球的位置， y移动范围为 0.22 - -0.15
+                ("gap", 0), # 停顿指令
+                ("gripper", -40), # 夹爪关闭
+                ("shoulder_pan", 11), # 1号舵机归位
+                ("move_to", (0.07, 0.24)), # 把球举起
+                ("wrist_flex", 8) # 腕部配合移动
                 ]
 
 
@@ -46,14 +47,14 @@ def main():
     for key, value in start_obs.items():
         if key.endswith('.pos'):
             motor_name = key.removesuffix('.pos')
-            start_positions[motor_name] = int(value)  # Don't apply calibration coefficients
+            start_positions[motor_name] = int(value)
 
     print("Initial joint angles:")
     for joint_name, position in start_positions.items():
         print(f"  {joint_name}: {position}°")
 
-    return_to_start_position(robot, start_obs, get_target_positions(), 0.9, get_fps())
-    x0, y0 = 0.0989, 0.125
+    return_to_start_position(robot, start_obs, get_target_positions(), 0.9, get_fps()) # 机械臂回到预设位置
+    x0, y0 = 0.0989, 0.125 # 当前位置的xy坐标
     current_x, current_y = x0, y0
     command_step = 0
     try:
@@ -63,11 +64,11 @@ def main():
             current_obs = robot.get_observation()
             frame = current_obs["front"]
             if get_robot_status() == RobotStatus.FIND_BUCKET:
-                result = get_red_bucket_local(frame)
+                result = get_red_bucket_local(frame) # 找桶的算法
             else:
-                result = yolo_infer(frame)
+                result = yolo_infer(frame) # 找球的算法
 
-            if get_hardware_mode() == 'normal':
+            if get_hardware_mode() == 'normal': # 摄像头视角显示，
                 for box in result:
                     x, y, w, h = box.x, box.y, box.w, box.h
                     center_x = x + w // 2

@@ -4,10 +4,10 @@ import yaml
 
 
 class RobotStatus(Enum):
-    SEARCH = "search"
-    PICK = "pick"
-    FIND_BUCKET = "find_bucket"
-    PUT_BALL = "put_ball"
+    SEARCH = "search" # 找球模式
+    PICK = "pick" # 捡球模式
+    FIND_BUCKET = "find_bucket" # 找桶模式
+    PUT_BALL = "put_ball" # 放球模式
 
 
 class RobotControlModel(Enum):
