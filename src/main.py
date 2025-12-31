@@ -67,7 +67,7 @@ def main():
             else:
                 result = yolo_infer(frame)
 
-            if get_hardware_mode() == 'normal' and True:
+            if get_hardware_mode() == 'normal':
                 for box in result:
                     x, y, w, h = box.x, box.y, box.w, box.h
                     center_x = x + w // 2
