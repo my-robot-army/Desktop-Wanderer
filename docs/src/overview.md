@@ -13,7 +13,7 @@ Desktop-Wanderer 是一个基于视觉引导的小型机器人系统，实现了
 
 Desktop-Wanderer 采用四层分层架构设计，从应用层到硬件层逐级抽象：
 
-![img.png](../images/img.png)
+![img.png](./images/img_1.png)
 
 系统核心是位于 src/main.py 的主控制循环 [main.py](https://github.com/my-robot-army/Desktop-Wanderer/blob/main/src/main.py#L10-L20) ，负责协调各个子系统：
 - 初始化阶段：加载配置、初始化机器人连接、读取初始关节角度 
